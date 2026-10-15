@@ -1,0 +1,182 @@
+import {
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useNavigation,
+} from "react-router";
+
+import type { Route } from "./+types/root";
+import "./app.css";
+import { getColorScheme } from "./.server/cookies";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from "wagmi";
+import { config } from "~/config/wagmi";
+import "@bprogress/core/css";
+import { BProgress } from "@bprogress/core";
+import { useEffect } from "react";
+import { queryClient } from "./queries/query-client";
+
+export const links: Route.LinksFunction = () => [
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+    crossOrigin: "anonymous",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap",
+  },
+];
+
+export async function loader({ request }: Route.LoaderArgs) {
+  let colorScheme = await getColorScheme(request);
+  return { colorScheme };
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  let loaderData = useLoaderData<typeof loader>();
+  BProgress.configure({});
+  const navigation = useNavigation();
+  const isLoading =
+    navigation.state === "loading" || navigation.state === "submitting";
+
+  useEffect(() => {
+    if (isLoading) {
+      BProgress.start();
+    } else {
+      BProgress.done();
+    }
+
+    return () => {
+      BProgress.done();
+    };
+  }, [isLoading]);
+
+  return (
+    <html
+      lang="en"
+      className={loaderData?.colorScheme ?? "dark"}
+      suppressHydrationWarning
+    >
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var c = params.get('thm');
+  var chains = {
+    8453: {
+      '--stats': '#d9dff5',
+      '--text': '#ffffff',
+      '--stat-text': '#ffffff',
+      '--accent': '#1e40ff',
+      '--accent-tertiary': '#9ab3ff',
+      '--accent-secondary': '#4a6fff',
+      '--icon': '#365eff',
+      '--heatmap-min': '#a8c5ff',
+      '--heatmap-max': '#ff4b00',
+    },
+  
+    42220: {
+      '--stats': '#37381F',
+      '--text': '#FFFFFF',
+      '--stat-text': '#ffffff',
+      '--accent': '#FCFF52',
+      '--accent-secondary': '#FFF799',
+      '--accent-tertiary': '#D4E831',
+      '--heatmap-min': '#1A1C20',
+      '--heatmap-max': '#FCFF52',
+      '--icon': '#E8A800',
+      '--chart-low': '#A0A23A',
+      '--chart-high': '#E5E85B'
+    },
+    42161: {
+  '--stats': '#213147',
+  '--text': '#FFFFFF',
+   '--stat-text': '#ffffff',
+  '--accent': '#12AAFF',
+  '--accent-secondary': '#9DCCED',
+  '--accent-tertiary': '#E5E5E5',
+  '--heatmap-min': '#213147',
+  '--heatmap-max': '#12AAFF',
+  '--icon': '#9DCCED',
+  '--chart-low': '#213147',
+  '--chart-high': '#12AAFF'
+},
+    10: {
+      '--stats': '#fff5f5',
+      '--text-primary': '#111111',
+      '--accent': '#ff0420',
+      '--icon': '#e00000'
+    }
+  };
+
+  if (c && chains[c]) {
+    var vars = chains[c];
+    for (var key in vars) {
+      document.documentElement.style.setProperty(key, vars[key]);
+    }
+  }
+})();
+    `,
+          }}
+        />
+
+        <Links />
+      </head>
+      <body>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+export default function App() {
+  return (
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  let message = "Oops!";
+  let details = "An unexpected error occurred.";
+  let stack: string | undefined;
+
+  if (isRouteErrorResponse(error)) {
+    message = error.status === 404 ? "404" : "Error";
+    details =
+      error.status === 404
+        ? "The requested page could not be found."
+        : error.statusText || details;
+  } else if (import.meta.env.DEV && error && error instanceof Error) {
+    details = error.message;
+    stack = error.stack;
+  }
+
+  return (
+    <main className="pt-16 p-4 container mx-auto">
+      <h1>{message}</h1>
+      <p>{details}</p>
+      {stack && (
+        <pre className="w-full p-4 overflow-x-auto">
+          <code>{stack}</code>
+        </pre>
+      )}
+    </main>
+  );
+}

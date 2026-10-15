@@ -1,0 +1,68 @@
+import { motion } from "motion/react";
+import type { Dispatch, SetStateAction } from "react";
+import type { Mode } from "~/types";
+
+interface ViewToggleProps {
+  viewMode: Mode;
+  setViewMode: Dispatch<SetStateAction<Mode>>;
+}
+
+export function ViewToggle({ viewMode, setViewMode }: ViewToggleProps) {
+  const views: {
+    mode: "yearly" | "monthly";
+    label: string;
+    targetView: "yearly" | "monthly";
+  }[] = [
+    {
+      mode: "monthly",
+      label: "Monthly",
+      targetView: "monthly",
+    },
+    {
+      mode: "yearly",
+      label: "Yearly",
+      targetView: "yearly",
+    },
+  ];
+
+  return (
+    <motion.div
+      className="flex justify-center"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="relative flex border border-dashed rounded-full p-1 border-[#4B4B4B]">
+        {views.map(({ mode, label }) => {
+          const isActive = viewMode === mode;
+          return (
+            <button
+              key={mode}
+              onClick={() => {
+                setViewMode(mode);
+              }}
+              className={`relative z-10 px-4 py-1.5 rounded-full transition-colors text-[12px] md:text-sm font-medium`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="toggle-pill"
+                  className="absolute inset-0 bg-green-100 rounded-full z-[-1]"
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 40,
+                  }}
+                />
+              )}
+              <span
+                className={isActive ? "text-success" : "text-text-secondary"}
+              >
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
