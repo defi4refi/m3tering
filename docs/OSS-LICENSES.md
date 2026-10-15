@@ -1,7 +1,7 @@
 # OSS-LICENSES — vendored component inventory
 
 All runtime code in this repo is vendored from upstream sources under
-. Commit SHAs below pin the grafted revision.
+`upstream/`. Commit SHAs below pin the grafted revision.
 
 | Component | Upstream | Commit | License | Obligations |
 |---|---|---|---|---|
